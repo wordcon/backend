@@ -7,8 +7,15 @@ requires-python = ">=3.13"
 dependencies = [
     "advanced-alchemy>=1.4.5",
     "aiosqlite>=0.21.0",
+    "asyncpg>=0.30.0",
+    "granian>=2.5.0",
+    "litestar-granian>=0.14.2",
+    "litestar-offline-docs>=1.1.0",
     "litestar[jwt,standard]>=2.16.0",
+    "microbootstrap>=0.23.0",
     "passlib[argon2]>=1.7.4",
+    "prometheus-client>=0.22.1",
     "sqlalchemy>=2.0.41",
     "structlog>=25.4.0",
 ]
+

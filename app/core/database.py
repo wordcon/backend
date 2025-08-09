@@ -4,8 +4,12 @@ from litestar.plugins.sqlalchemy import (
     SQLAlchemyPlugin,
 )
 
+from app.core.settings import settings
+
+DATABASE_URL = settings.database_url
+
 sqlalchemy_config = SQLAlchemyAsyncConfig(
-    connection_string="sqlite+aiosqlite:///test.sqlite",
+    connection_string=DATABASE_URL,
     before_send_handler="autocommit",
     session_config=AsyncSessionConfig(expire_on_commit=False),
     create_all=True,

@@ -1,64 +1,51 @@
-import sys
 from typing import Any
 
 from advanced_alchemy.exceptions import IntegrityError, RepositoryError
-from litestar.connection import Request
-from litestar.exceptions import (
-    HTTPException,
-    InternalServerException,
-    NotFoundException,
-)
-from litestar.exceptions.responses import create_debug_response, create_exception_response
-from litestar.middleware.exceptions.middleware import ExceptionResponseContent
+from litestar import MediaType, Request, Response
+from litestar.exceptions import NotFoundException
 from litestar.repository.exceptions import ConflictError, NotFoundError
-from litestar.response import Response
-from litestar.status_codes import HTTP_409_CONFLICT
-from litestar.types import Scope
-from structlog.contextvars import bind_contextvars
+from litestar.status_codes import (
+    HTTP_404_NOT_FOUND,
+    HTTP_409_CONFLICT,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 
-class ApplicationError(Exception):
-    detail: str
-
-    def __init__(self, *args: Any, detail: str = "") -> None:
-        self.detail = detail or getattr(self, "detail", "")
-        super().__init__(*args)
-
-
-class _HTTPConflictException(HTTPException):
-    status_code = HTTP_409_CONFLICT
-
-
-async def after_exception_hook_handler(exc: Exception, _scope: Scope) -> None:
-    if isinstance(exc, HTTPException) and exc.status_code < 500:
-        return
-    bind_contextvars(exc_info=sys.exc_info())
-
-
-def exception_to_http_response(
+def repository_exception_handler(
         request: Request[Any, Any, Any],
         exc: RepositoryError,
-) -> Response[ExceptionResponseContent]:
-    if request.app.debug:
-        return create_debug_response(request, exc)
-
-    http_exc: type[HTTPException]
-    detail: str
-
+) -> Response[dict[str, Any]]:
     if isinstance(exc, NotFoundError):
-        http_exc = NotFoundException
+        status_code = HTTP_404_NOT_FOUND
         detail = "The requested resource was not found."
-
-    elif isinstance(exc, IntegrityError):
-        http_exc = _HTTPConflictException
-        detail = "A resourse already exists."
-
-    elif isinstance(exc, ConflictError):
-        http_exc = _HTTPConflictException
+    elif isinstance(exc, (IntegrityError, ConflictError)):
+        status_code = HTTP_409_CONFLICT
         detail = "A conflict occurred with the current state of the resource."
-
     else:
-        http_exc = InternalServerException
-        detail = "An unexpected database error occurred."
+        status_code = HTTP_500_INTERNAL_SERVER_ERROR
+        detail = "Internal Server Error"
 
-    return create_exception_response(request, http_exc(detail=detail))
+    return Response[dict[str, Any]](
+        media_type=MediaType.JSON,
+        content={
+            "status_code": status_code,
+            "detail": detail,
+            "extra": {},
+        },
+        status_code=status_code,
+    )
+
+
+def not_found_exception_handler(
+        request: Request[Any, Any, Any],
+        exc: NotFoundException,
+) -> Response[dict[str, Any]]:
+    return Response[dict[str, Any]](
+        media_type=MediaType.JSON,
+        content={
+            "status_code": HTTP_404_NOT_FOUND,
+            "detail": "The requested resource was not found.",
+            "extra": {},
+        },
+        status_code=HTTP_404_NOT_FOUND,
+    )
