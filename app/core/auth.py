@@ -1,14 +1,12 @@
-import os
 from typing import Any
 
 from litestar.connection import ASGIConnection
 from litestar.security.jwt import JWTAuth, Token
 
 from app.core.database import sqlalchemy_config
+from app.core.settings import settings
 from app.domains.users.schemas import User
 from app.domains.users.services import UserService
-
-JWT_SECRET = os.environ.get("JWT_SECRET", "a-very-secure-secret")
 
 
 async def retrieve_user_handler(token: Token, connection: ASGIConnection[Any, Any, Any, Any]) -> User | None:
@@ -31,6 +29,6 @@ async def retrieve_user_handler(token: Token, connection: ASGIConnection[Any, An
 
 jwt_auth = JWTAuth[User](
     retrieve_user_handler=retrieve_user_handler,
-    token_secret=JWT_SECRET,
+    token_secret=settings.jwt_secret,
     exclude=["/schema"],
 )

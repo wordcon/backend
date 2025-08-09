@@ -32,7 +32,7 @@ class UserService(SQLAlchemyAsyncRepositoryService[UserModel]):
     async def authenticate(self, email: str, password: str) -> UserModel:
         db_obj = await self.get_one_or_none(email=email)
         if not db_obj or not await crypt.verify_password(password, db_obj.hashed_password):
-            msg = "Неправильный email или пароль"
+            msg = "Неправильный email или пароль"  # TODO: потом убрать
             raise NotAuthorizedException(detail=msg)
 
         return db_obj
