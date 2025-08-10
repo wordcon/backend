@@ -25,18 +25,18 @@ tags:
     description: Лидерборд
 
 paths:
-  /users/register:
+  /users/signu:
     post:
       tags: [users]
-      summary: Регистрация
+      summary: Создание пользователя
       description: Создать нового пользователя и выдать токен.
-      operationId: registerUser
+      operationId: CreateUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RegisterRequest"
+              $ref: "#/components/schemas/SignUpRequest"
       responses:
         "201":
           description: Пользователь создан
@@ -583,7 +583,7 @@ components:
         place: { type: integer }
       required: [username, points, place]
 
-    RegisterRequest:
+    SignUpRequest:
       type: object
       properties:
         email: { type: string, format: email }

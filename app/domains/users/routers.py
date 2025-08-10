@@ -1,43 +1,71 @@
 from typing import Any
 
 from advanced_alchemy.extensions.litestar.providers import create_service_dependencies
-from litestar import Controller, patch
-from litestar import get, post, Request, Response
+from litestar import Controller, Request, Response, get, patch, post
 from litestar.security.jwt import Token
 
 from app.core.auth import jwt_auth
 from app.core.guards import admin_only_guard
-from app.domains.users.schemas import User, UserBan
-from app.domains.users.schemas import UserCreate, UserLogin
+from app.domains.users.schemas import (
+    LoginRequest,
+    RegisterRequest,
+    UpdateUserRequest,
+    User,
+    UserBan,
+    UserPublic,
+)
 from app.domains.users.services import UserService
 
 
-class AuthController(Controller):
-    path = "/auth"
+class UsersController(Controller):
+    path = "/users"
     dependencies = create_service_dependencies(
         UserService,
         key="users_service",
     )
-    tags = ["Users"]
+    tags = ["users"]
 
-    @post(exclude_from_auth=True)
-    async def signup(self, users_service: UserService, data: UserCreate) -> User:
-        user_data = data.to_dict()
-        user = await users_service.create(user_data)
-        return users_service.to_schema(user, schema_type=User)
-
-    @post("/login", exclude_from_auth=True)
-    async def login(self, users_service: UserService, data: UserLogin) -> Response[User]:
-        user = await users_service.authenticate(email=data.email, password=data.password)
-
+    @post("/signup", exclude_from_auth=True)
+    async def register(
+            self, users_service: UserService, data: RegisterRequest
+    ) -> Response[UserPublic]:
+        user = await users_service.create(data.to_dict())
+        public_user = users_service.to_schema(user, schema_type=UserPublic)
         return jwt_auth.login(
             identifier=str(user.id),
-            response_body=users_service.to_schema(user, schema_type=User),
+            response_body=public_user,
+        )
+
+    @post("/login", exclude_from_auth=True)
+    async def login(
+            self, users_service: UserService, data: LoginRequest
+    ) -> Response[UserPublic]:
+        user = await users_service.authenticate(
+            email=data.email, password=data.password
+        )
+        public_user = users_service.to_schema(user, schema_type=UserPublic)
+        return jwt_auth.login(
+            identifier=str(user.id),
+            response_body=public_user,
         )
 
     @get("/me")
-    async def profile(self, request: Request[User, Token, Any]) -> User:
-        return request.user
+    async def get_me(
+            self, request: Request[User, Token, Any], users_service: UserService
+    ) -> UserPublic:
+        user_model = await users_service.get(item_id=request.user.id)
+        return users_service.to_schema(user_model, schema_type=UserPublic)
+
+    @patch("/me")
+    async def update_me(
+            self,
+            request: Request[User, Token, Any],
+            users_service: UserService,
+            data: UpdateUserRequest,
+    ) -> UserPublic:
+        update_data = data.to_dict()
+        updated = await users_service.update(item_id=request.user.id, data=update_data)
+        return users_service.to_schema(updated, schema_type=UserPublic)
 
 
 class AdminController(Controller):
@@ -47,13 +75,12 @@ class AdminController(Controller):
         UserService,
         key="users_service",
     )
-    tags = ["Admin"]
+    tags = ["admin"]
 
     @patch("/ban")
-    async def ban_user(self, users_service: UserService, data: UserBan) -> User:
+    async def ban_user(self, users_service: UserService, data: UserBan) -> UserPublic:
         updated_user = await users_service.update(
             item_id=data.id,
             data={"is_banned": data.banned},
         )
-
-        return users_service.to_schema(updated_user, schema_type=User)
+        return users_service.to_schema(updated_user, schema_type=UserPublic)
