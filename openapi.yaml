@@ -15,8 +15,8 @@ servers:
     description: Staging
 
 tags:
-  - name: auth
-    description: Аутентификация и профиль
+  - name: users
+    description: Пользователи и профиль
   - name: rooms
     description: Комнаты
   - name: games
@@ -25,9 +25,9 @@ tags:
     description: Лидерборд
 
 paths:
-  /auth/register:
+  /users/register:
     post:
-      tags: [auth]
+      tags: [users]
       summary: Регистрация
       description: Создать нового пользователя и выдать токен.
       operationId: registerUser
@@ -46,9 +46,9 @@ paths:
                 $ref: "#/components/schemas/AuthResponse"
         "409":
           description: Email уже используется
-  /auth/login:
+  /users/login:
     post:
-      tags: [auth]
+      tags: [users]
       summary: Вход
       description: Аутентификация по email и паролю.
       operationId: loginUser
@@ -67,9 +67,9 @@ paths:
                 $ref: "#/components/schemas/AuthResponse"
         "401":
           description: Неверные учетные данные
-  /auth/me:
+  /users/me:
     get:
-      tags: [auth]
+      tags: [users]
       summary: Текущий пользователь
       description: Получить профиль текущего пользователя по токену.
       operationId: getMe
@@ -82,7 +82,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
     patch:
-      tags: [auth]
+      tags: [users]
       summary: Обновить профиль
       description: Частично обновить профиль текущего пользователя.
       operationId: updateMe
