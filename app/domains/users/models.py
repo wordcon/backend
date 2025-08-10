@@ -3,6 +3,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class UserModel(UUIDAuditBase):
+    __tablename__ = "users"
+
     email: Mapped[str] = mapped_column(index=True, unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(nullable=False)
 

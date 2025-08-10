@@ -1,4 +1,5 @@
 from litestar.plugins.sqlalchemy import (
+    AlembicAsyncConfig,
     AsyncSessionConfig,
     SQLAlchemyAsyncConfig,
     SQLAlchemyPlugin,
@@ -12,6 +13,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
     connection_string=DATABASE_URL,
     before_send_handler="autocommit",
     session_config=AsyncSessionConfig(expire_on_commit=False),
-    create_all=True,
+    alembic_config=AlembicAsyncConfig(script_location="./migrations"),
+    create_all=False,
 )
 alchemy = SQLAlchemyPlugin(config=sqlalchemy_config)

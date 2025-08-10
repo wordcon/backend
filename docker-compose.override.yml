@@ -3,6 +3,7 @@ x-dev-volumes: &dev-volumes
     - ./app:/workspace/app/app
     - ./pyproject.toml:/workspace/app/pyproject.toml
     - ./uv.lock:/workspace/app/uv.lock
+    - ./migrations:/workspace/app/migrations
 
 services:
   app:
