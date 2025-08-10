@@ -1,0 +1,606 @@
+openapi: 3.1.0
+info:
+  title: Wordcon API
+  version: 1.0.0
+  description: API для игры Wordcon
+  contact:
+    name: API Support
+    url: https://example.com/support
+    email: support@example.com
+
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: https://staging.api.example.com
+    description: Staging
+
+tags:
+  - name: auth
+    description: Аутентификация и профиль
+  - name: rooms
+    description: Комнаты
+  - name: games
+    description: Игровой процесс
+  - name: leaderboard
+    description: Лидерборд
+
+paths:
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Регистрация
+      description: Создать нового пользователя и выдать токен.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          description: Email уже используется
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Вход
+      description: Аутентификация по email и паролю.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Неверные учетные данные
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Текущий пользователь
+      description: Получить профиль текущего пользователя по токену.
+      operationId: getMe
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      tags: [auth]
+      summary: Обновить профиль
+      description: Частично обновить профиль текущего пользователя.
+      operationId: updateMe
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Обновленный пользователь
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /categories:
+    get:
+      tags: [rooms]
+      summary: Список категорий игр
+      description: Получить доступные категории для комнат/раундов.
+      operationId: listCategories
+      responses:
+        "200":
+          description: Категории
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /rooms:
+    get:
+      tags: [rooms]
+      summary: Список комнат
+      description: Получить открытые комнаты с фильтрами по категории, названию и статусу.
+      operationId: listRooms
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+          description: Фильтр по категории
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Поиск по названию
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [open, in_game, finished]
+          description: Статус комнаты
+      responses:
+        "200":
+          description: Список комнат
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Room"
+    post:
+      tags: [rooms]
+      summary: Создать комнату
+      description: Создать новую комнату с параметрами лимита игроков, времени хода и категории.
+      operationId: createRoom
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoomRequest"
+      responses:
+        "201":
+          description: Комната создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+
+  /rooms/{roomId}:
+    parameters:
+      - in: path
+        name: roomId
+        required: true
+        schema: { type: string, format: uuid }
+        description: Идентификатор комнаты
+    get:
+      tags: [rooms]
+      summary: Детали комнаты
+      description: Получить информацию о комнате и список игроков.
+      operationId: getRoom
+      responses:
+        "200":
+          description: Комната
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+        "404":
+          description: Не найдена
+    patch:
+      tags: [rooms]
+      summary: Обновить комнату
+      description: Обновить настройки комнаты (только владелец).
+      operationId: updateRoom
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoomRequest"
+      responses:
+        "200":
+          description: Обновленная комната
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+    delete:
+      tags: [rooms]
+      summary: Удалить комнату
+      description: Удалить комнату (только владелец).
+      operationId: deleteRoom
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204":
+          description: Удалено
+
+  /rooms/{roomId}/join:
+    post:
+      tags: [rooms]
+      summary: Войти в комнату
+      description: Присоединиться к комнате по идентификатору, при необходимости с паролем.
+      operationId: joinRoom
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор комнаты
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Вошли в комнату
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+        "403":
+          description: Неверный пароль или лимит игроков
+
+  /rooms/{roomId}/leave:
+    post:
+      tags: [rooms]
+      summary: Выйти из комнаты
+      description: Покинуть комнату, в которой находится пользователь.
+      operationId: leaveRoom
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор комнаты
+      responses:
+        "204":
+          description: Вышли
+
+  /rooms/{roomId}/players:
+    get:
+      tags: [rooms]
+      summary: Игроки комнаты
+      description: Получить список игроков, присоединившихся к комнате.
+      operationId: listRoomPlayers
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор комнаты
+      responses:
+        "200":
+          description: Список игроков
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Player"
+
+  /rooms/{roomId}/players/{userId}:
+    delete:
+      tags: [rooms]
+      summary: Кикнуть игрока
+      description: Удалить игрока из комнаты (только владелец).
+      operationId: kickPlayer
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор комнаты
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор пользователя
+      responses:
+        "204":
+          description: Удален
+
+  /rooms/{roomId}/start:
+    post:
+      tags: [games]
+      summary: Запуск игры в комнате
+      description: Начать игру в комнате (только владелец).
+      operationId: startGameInRoom
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор комнаты
+      responses:
+        "200":
+          description: Игра запущена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{gameId}:
+    parameters:
+      - in: path
+        name: gameId
+        required: true
+        schema: { type: string, format: uuid }
+        description: Идентификатор игры
+    get:
+      tags: [games]
+      summary: Состояние игры
+      description: Получить текущее состояние игры и таймер.
+      operationId: getGame
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Текущее состояние
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{gameId}/guess:
+    post:
+      tags: [games]
+      summary: Отправить догадку
+      description: Отправить ответ игрока для текущего раунда игры.
+      operationId: sendGuess
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор игры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuessRequest"
+      responses:
+        "200":
+          description: Принято
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{gameId}/tick:
+    post:
+      tags: [games]
+      summary: Тик хода
+      description: Вызов для продления/смены хода, исполняется лидером/сервером.
+      operationId: tickGame
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Идентификатор игры
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          description: Обновленное состояние
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /leaderboard:
+    get:
+      tags: [leaderboard]
+      summary: Глобальный лидерборд
+      description: Получить топ игроков по очкам.
+      operationId: getLeaderboard
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, minimum: 1, maximum: 500 }
+          description: Ограничение количества записей
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0, minimum: 0 }
+          description: Смещение для пагинации
+      responses:
+        "200":
+          description: Лидерборд
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+
+    User:
+      type: object
+      properties:
+        id: { $ref: "#/components/schemas/UUID" }
+        email: { type: string, format: email }
+        name: { type: string, nullable: true }
+        username: { type: string }
+        status: { type: string, nullable: true }
+        avatar_url: { type: string, format: uri, nullable: true }
+        banner_url: { type: string, format: uri, nullable: true }
+        points: { type: integer, default: 0 }
+        created_at: { type: string, format: date-time }
+      required: [id, email, username]
+
+    UpdateUserRequest:
+      type: object
+      description: Частичное обновление профиля пользователя.
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        username: { type: string }
+        status: { type: string }
+        avatar_url: { type: string, format: uri }
+        banner_url: { type: string, format: uri }
+      minProperties: 1
+
+    Player:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        joined_at: { type: string, format: date-time }
+        is_owner: { type: boolean }
+      required: [user, joined_at, is_owner]
+
+    Category:
+      type: object
+      properties:
+        id: { $ref: "#/components/schemas/UUID" }
+        name: { type: string, example: Food }
+      required: [id, name]
+
+    Room:
+      type: object
+      properties:
+        id: { $ref: "#/components/schemas/UUID" }
+        name: { type: string }
+        category: { type: string }
+        room_owner: { $ref: "#/components/schemas/UUID" }
+        players_limit: { type: integer, minimum: 1, maximum: 16 }
+        turn_time: { type: integer }
+        is_private: { type: boolean, default: false }
+        has_password: { type: boolean, default: false }
+        players:
+          type: array
+          items: { $ref: "#/components/schemas/Player" }
+        status:
+          type: string
+          enum: [open, in_game, finished]
+        created_at: { type: string, format: date-time }
+      required:
+        [
+          id,
+          name,
+          category,
+          room_owner,
+          players_limit,
+          turn_time,
+          players,
+          status,
+        ]
+
+    CreateRoomRequest:
+      type: object
+      properties:
+        name: { type: string }
+        password: { type: string, nullable: true }
+        players_limit: { type: integer, minimum: 1, maximum: 16 }
+        turn_time: { type: integer, minimum: 5, maximum: 600 }
+        category: { type: string }
+        is_private: { type: boolean, default: false }
+      required: [name, players_limit, turn_time, category]
+
+    UpdateRoomRequest:
+      type: object
+      properties:
+        name: { type: string }
+        password: { type: string, nullable: true }
+        players_limit: { type: integer, minimum: 1, maximum: 16 }
+        turn_time: { type: integer, minimum: 5, maximum: 600 }
+        category: { type: string }
+        status:
+          type: string
+          enum: [open, in_game, finished]
+
+    Game:
+      type: object
+      properties:
+        id: { $ref: "#/components/schemas/UUID" }
+        room_id: { $ref: "#/components/schemas/UUID" }
+        name: { type: string }
+        state: { type: string, enum: [waiting, running, ended] }
+        round: { type: integer, minimum: 1 }
+        turn_time: { type: integer }
+        time_left: { type: integer }
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id: { $ref: "#/components/schemas/UUID" }
+              value: { type: integer }
+        places:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id: { $ref: "#/components/schemas/UUID" }
+              place: { type: integer, minimum: 1 }
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, room_id, state, turn_time]
+
+    GuessRequest:
+      type: object
+      properties:
+        text: { type: string, description: Ответ игрока }
+      required: [text]
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        username: { type: string }
+        avatar_url: { type: string, format: uri, nullable: true }
+        points: { type: integer }
+        place: { type: integer }
+      required: [username, points, place]
+
+    RegisterRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 6 }
+        username: { type: string }
+      required: [email, password, username]
+
+    LoginRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        user: { $ref: "#/components/schemas/User" }
+      required: [access_token, user]
