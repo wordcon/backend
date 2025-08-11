@@ -304,6 +304,15 @@ wheels = [
 ]
 
 [[package]]
+name = "dishka"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/04/f3add05678a3ac1ab7736faae45b18b5365d84b1cd3cf3af64b09a1d6a5f/dishka-1.6.0.tar.gz", hash = "sha256:f1fa5ec7e980d4f618d0c425d1bb81d8e9414894d8ec6553b197d2298774e12f", size = 65971, upload-time = "2025-05-18T21:40:53.259Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/6b/f9cd08543c4f55bf129a0ebce5c09e43528235dd6e7cb906761ca094979a/dishka-1.6.0-py3-none-any.whl", hash = "sha256:ab1aedee152ce7bb11cfd2673d7ce4001fe2b330d14e84535d7525a68430b2c2", size = 90789, upload-time = "2025-05-18T21:40:51.352Z" },
+]
+
+[[package]]
 name = "distlib"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1876,6 +1885,7 @@ dependencies = [
     { name = "advanced-alchemy" },
     { name = "aiosqlite" },
     { name = "asyncpg" },
+    { name = "dishka" },
     { name = "granian" },
     { name = "litestar", extra = ["jwt", "standard"] },
     { name = "litestar-granian" },
@@ -1901,6 +1911,7 @@ requires-dist = [
     { name = "advanced-alchemy", specifier = ">=1.4.5" },
     { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "asyncpg", specifier = ">=0.30.0" },
+    { name = "dishka", specifier = ">=1.6.0" },
     { name = "granian", specifier = ">=2.5.0" },
     { name = "litestar", extras = ["jwt", "standard"], specifier = ">=2.16.0" },
     { name = "litestar-granian", specifier = ">=0.14.2" },

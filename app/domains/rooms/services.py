@@ -19,7 +19,6 @@ from app.domains.rooms.constants import (
     ERR_PASSWORD_REQUIRED,
     ERR_PLAYER_NOT_IN_ROOM,
     ERR_ROOM_FULL,
-    ERR_ROOM_NOT_FOUND,
 )
 from app.domains.rooms.models import RoomModel, RoomPlayerModel, RoomStatus
 from app.domains.rooms.schemas import Player, Room
@@ -49,19 +48,18 @@ class RoomService(SQLAlchemyAsyncRepositoryService[RoomModel]):
             hashed_password = await crypt.get_password_hash(password)
             has_password = True
 
-        room = await self.repository.add(
-            RoomModel(
-                name=data['name'],
-                category=data['category'],
-                room_owner_id=owner_id,
-                players_limit=int(data['players_limit']),
-                turn_time=int(data['turn_time']),
-                is_private=bool(data.get('is_private', False)),
-                has_password=has_password,
-                hashed_password=hashed_password,
-                status=RoomStatus.OPEN.value,
-            ),
-            auto_refresh=True,
+        room = await super().create(
+            {
+                'name': data['name'],
+                'category': data['category'],
+                'room_owner_id': owner_id,
+                'players_limit': int(data['players_limit']),
+                'turn_time': int(data['turn_time']),
+                'is_private': bool(data.get('is_private', False)),
+                'has_password': has_password,
+                'hashed_password': hashed_password,
+                'status': RoomStatus.OPEN.value,
+            }
         )
 
         await self._players_repo().add(
@@ -92,10 +90,7 @@ class RoomService(SQLAlchemyAsyncRepositoryService[RoomModel]):
         return rooms
 
     async def get_room(self, room_id: UUID) -> RoomModel:
-        try:
-            return await self.repository.get(room_id)
-        except Exception as err:
-            raise NotFoundException(ERR_ROOM_NOT_FOUND) from err
+        return await self.repository.get(room_id)
 
     async def update_room(self, room_id: UUID, actor_id: UUID, data: dict[str, Any]) -> RoomModel:
         room = await self.get_room(room_id)

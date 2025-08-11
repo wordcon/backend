@@ -1,0 +1,5 @@
+ERR_GAME_NOT_FOUND = 'Game not found'
+ERR_ONLY_OWNER_CAN_START = 'Only room owner can start the game'
+ERR_ROOM_NOT_OPEN = 'Room is not open for starting a game'
+ERR_NO_PLAYERS_IN_ROOM = 'No players in the room to start a game'
+ERR_NOT_IN_GAME = 'User is not a participant of this game'
