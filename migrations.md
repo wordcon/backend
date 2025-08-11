@@ -2,7 +2,7 @@
 docker compose up -d db
 
 сгенерировать миграцию:
-docker compose run --rm app litestar database make-migrations
+docker compose run --rm app litestar database make-migrations -m "fucking"
 
 применить миграцию:
 docker compose run --rm app litestar database upgrade

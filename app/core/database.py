@@ -13,7 +13,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
     connection_string=DATABASE_URL,
     before_send_handler='autocommit',
     session_config=AsyncSessionConfig(expire_on_commit=False),
-    alembic_config=AlembicAsyncConfig(script_location="./migrations"),
+    alembic_config=AlembicAsyncConfig(script_location='./migrations'),
     create_all=False,
 )
 alchemy = SQLAlchemyPlugin(config=sqlalchemy_config)

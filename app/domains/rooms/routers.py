@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID, uuid4
 
-from advanced_alchemy.extensions.litestar.providers import create_service_dependencies
+from dishka.integrations.litestar import FromDishka
 from litestar import Controller, Request, delete, get, patch, post
 from litestar.security.jwt import Token
 
@@ -38,12 +38,10 @@ class RoomsController(Controller):
     path = '/rooms'
     tags = ['rooms']
 
-    dependencies = create_service_dependencies(RoomService, key='rooms_service')
-
     @get()
     async def list_rooms(
         self,
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         category: str | None = None,
         q: str | None = None,
         status: str | None = None,
@@ -55,7 +53,7 @@ class RoomsController(Controller):
     async def create_room(
         self,
         request: Request[User, Token, Any],
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         data: CreateRoomRequest,
     ) -> Room:
         room = await rooms_service.create_room(owner_id=request.user.id, data=data.to_dict())
@@ -64,7 +62,7 @@ class RoomsController(Controller):
     @get('/{room_id:uuid}')
     async def get_room(
         self,
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         room_id: UUID,
     ) -> Room:
         room = await rooms_service.get_room(room_id)
@@ -74,7 +72,7 @@ class RoomsController(Controller):
     async def update_room(
         self,
         request: Request[User, Token, Any],
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         room_id: UUID,
         data: UpdateRoomRequest,
     ) -> Room:
@@ -85,7 +83,7 @@ class RoomsController(Controller):
     async def delete_room(
         self,
         request: Request[User, Token, Any],
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         room_id: UUID,
     ) -> None:
         await rooms_service.delete_room(room_id=room_id, actor_id=request.user.id)
@@ -94,7 +92,7 @@ class RoomsController(Controller):
     async def join_room(
         self,
         request: Request[User, Token, Any],
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         room_id: UUID,
         data: JoinRoomRequest | None = None,
     ) -> Room:
@@ -106,7 +104,7 @@ class RoomsController(Controller):
     async def leave_room(
         self,
         request: Request[User, Token, Any],
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         room_id: UUID,
     ) -> None:
         await rooms_service.leave_room(room_id=room_id, user_id=request.user.id)
@@ -114,7 +112,7 @@ class RoomsController(Controller):
     @get('/{room_id:uuid}/players')
     async def list_room_players(
         self,
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         room_id: UUID,
     ) -> list[Player]:
         room = await rooms_service.get_room(room_id)
@@ -124,7 +122,7 @@ class RoomsController(Controller):
     async def kick_player(
         self,
         request: Request[User, Token, Any],
-        rooms_service: RoomService,
+        rooms_service: FromDishka[RoomService],
         room_id: UUID,
         user_id: UUID,
     ) -> None:

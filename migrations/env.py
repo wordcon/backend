@@ -1,24 +1,22 @@
 import asyncio
 from typing import TYPE_CHECKING, cast
 
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import AsyncEngine, async_engine_from_config
-
 from advanced_alchemy.base import metadata_registry
 from alembic import context
 from alembic.autogenerate import rewriter
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import AsyncEngine, async_engine_from_config
 
 if TYPE_CHECKING:
+    from advanced_alchemy.alembic.commands import AlembicCommandConfig
     from sqlalchemy.engine import Connection
 
-    from advanced_alchemy.alembic.commands import AlembicCommandConfig
-
-__all__ = ("do_run_migrations", "run_migrations_offline", "run_migrations_online")
+__all__ = ('do_run_migrations', 'run_migrations_offline', 'run_migrations_online')
 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-config: "AlembicCommandConfig" = context.config  # type: ignore
+config: 'AlembicCommandConfig' = context.config  # type: ignore
 writer = rewriter.Rewriter()
 
 
@@ -37,7 +35,7 @@ def run_migrations_offline() -> None:
         url=config.db_url,
         target_metadata=metadata_registry.get(config.bind_key),
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        dialect_opts={'paramstyle': 'named'},
         compare_type=config.compare_type,
         version_table=config.version_table_name,
         version_table_pk=config.version_table_pk,
@@ -50,7 +48,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection: "Connection") -> None:
+def do_run_migrations(connection: 'Connection') -> None:
     """Run migrations."""
     context.configure(
         connection=connection,
@@ -77,20 +75,20 @@ async def run_migrations_online() -> None:
         RuntimeError: If the engine cannot be created from the config.
     """
     configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = config.db_url
+    configuration['sqlalchemy.url'] = config.db_url
 
     connectable = cast(
-        "AsyncEngine",
+        'AsyncEngine',
         config.engine
         or async_engine_from_config(
             configuration,
-            prefix="sqlalchemy.",
+            prefix='sqlalchemy.',
             poolclass=pool.NullPool,
             future=True,
         ),
     )
     if connectable is None:  # pyright: ignore[reportUnnecessaryComparison]
-        msg = "Could not get engine from config.  Please ensure your `alembic.ini` according to the official Alembic documentation."
+        msg = 'Could not get engine from config.  Please ensure your `alembic.ini` according to the official Alembic documentation.'
         raise RuntimeError(
             msg,
         )
