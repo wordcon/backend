@@ -2,7 +2,7 @@
 docker compose up -d db
 
 сгенерировать миграцию:
-docker compose run --rm app litestar database make-migrations -m "your message"
+docker compose run --rm app litestar database make-migrations
 
 применить миграцию:
 docker compose run --rm app litestar database upgrade
@@ -11,4 +11,4 @@ docker compose run --rm app litestar database upgrade
 docker compose run --rm app litestar database show-current-revision
 
 откатить на 1 шаг:
-docker compose run --rm app litestar database downgrade -1
+docker compose run --rm app litestar database downgrade 1

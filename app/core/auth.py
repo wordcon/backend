@@ -9,12 +9,8 @@ from app.domains.users.schemas import User
 from app.domains.users.services import UserService
 
 
-async def retrieve_user_handler(
-        token: Token, connection: ASGIConnection[Any, Any, Any, Any]
-) -> User | None:
-    db_session = sqlalchemy_config.provide_session(
-        state=connection.app.state, scope=connection.scope
-    )
+async def retrieve_user_handler(token: Token, connection: ASGIConnection[Any, Any, Any, Any]) -> User | None:
+    db_session = sqlalchemy_config.provide_session(state=connection.app.state, scope=connection.scope)
     user_service = UserService(session=db_session)
 
     user_id = token.sub
@@ -30,10 +26,10 @@ async def retrieve_user_handler(
 
 
 EXCLUDED_PATHS = [
-    "/schema",
-    "/health",
-    "/health/",
-    "/metrics",
+    '/schema',
+    '/health',
+    '/health/',
+    '/metrics',
 ]
 
 jwt_auth = JWTAuth[User](

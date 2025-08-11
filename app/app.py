@@ -15,13 +15,14 @@ from app.core.exceptions import (
     repository_exception_handler,
 )
 from app.core.settings import settings
+from app.domains.rooms.routers import CategoriesController, RoomsController
 from app.domains.users.routers import UsersController
 
 bootstrapper = LitestarBootstrapper(settings)
 
 bootstrapper.configure_application(
     LitestarConfig(
-        route_handlers=[UsersController],
+        route_handlers=[UsersController, RoomsController, CategoriesController],
         plugins=[alchemy, GranianPlugin()],
         openapi_config=OpenAPIConfig(
             title=settings.service_name,

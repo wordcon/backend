@@ -8,5 +8,5 @@ class BaseStruct(msgspec.Struct):
         return {f: getattr(self, f) for f in self.__struct_fields__ if getattr(self, f, None) != msgspec.UNSET}
 
 
-class CamelizedBaseStruct(BaseStruct, rename="camel"):
+class CamelizedBaseStruct(BaseStruct, rename='camel'):  # type: ignore
     """Camelized Base Struct"""

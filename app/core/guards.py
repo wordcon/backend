@@ -9,4 +9,4 @@ from app.domains.users.schemas import User
 
 def admin_only_guard(connection: ASGIConnection[Any, User, Any, Any], _: BaseRouteHandler) -> None:
     if not connection.user or not connection.user.is_admin:
-        raise PermissionDeniedException(detail="You do not have permission to perform this action.")
+        raise PermissionDeniedException(detail='You do not have permission to perform this action.')

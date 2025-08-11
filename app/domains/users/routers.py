@@ -18,17 +18,15 @@ from app.domains.users.services import UserService
 
 
 class UsersController(Controller):
-    path = "/users"
+    path = '/users'
     dependencies = create_service_dependencies(
         UserService,
-        key="users_service",
+        key='users_service',
     )
-    tags = ["users"]
+    tags = ['users']
 
-    @post("/signup", exclude_from_auth=True)
-    async def register(
-            self, users_service: UserService, data: RegisterRequest
-    ) -> Response[UserPublic]:
+    @post('/signup', exclude_from_auth=True)
+    async def register(self, users_service: UserService, data: RegisterRequest) -> Response[UserPublic]:
         user = await users_service.create(data.to_dict())
         public_user = users_service.to_schema(user, schema_type=UserPublic)
         return jwt_auth.login(
@@ -36,32 +34,26 @@ class UsersController(Controller):
             response_body=public_user,
         )
 
-    @post("/login", exclude_from_auth=True)
-    async def login(
-            self, users_service: UserService, data: LoginRequest
-    ) -> Response[UserPublic]:
-        user = await users_service.authenticate(
-            email=data.email, password=data.password
-        )
+    @post('/login', exclude_from_auth=True)
+    async def login(self, users_service: UserService, data: LoginRequest) -> Response[UserPublic]:
+        user = await users_service.authenticate(email=data.email, password=data.password)
         public_user = users_service.to_schema(user, schema_type=UserPublic)
         return jwt_auth.login(
             identifier=str(user.id),
             response_body=public_user,
         )
 
-    @get("/me")
-    async def get_me(
-            self, request: Request[User, Token, Any], users_service: UserService
-    ) -> UserPublic:
+    @get('/me')
+    async def get_me(self, request: Request[User, Token, Any], users_service: UserService) -> UserPublic:
         user_model = await users_service.get(item_id=request.user.id)
         return users_service.to_schema(user_model, schema_type=UserPublic)
 
-    @patch("/me")
+    @patch('/me')
     async def update_me(
-            self,
-            request: Request[User, Token, Any],
-            users_service: UserService,
-            data: UpdateUserRequest,
+        self,
+        request: Request[User, Token, Any],
+        users_service: UserService,
+        data: UpdateUserRequest,
     ) -> UserPublic:
         update_data = data.to_dict()
         updated = await users_service.update(item_id=request.user.id, data=update_data)
@@ -69,18 +61,18 @@ class UsersController(Controller):
 
 
 class AdminController(Controller):
-    path = "/admin"
+    path = '/admin'
     guards = [admin_only_guard]
     dependencies = create_service_dependencies(
         UserService,
-        key="users_service",
+        key='users_service',
     )
-    tags = ["admin"]
+    tags = ['admin']
 
-    @patch("/ban")
+    @patch('/ban')
     async def ban_user(self, users_service: UserService, data: UserBan) -> UserPublic:
         updated_user = await users_service.update(
             item_id=data.id,
-            data={"is_banned": data.banned},
+            data={'is_banned': data.banned},
         )
         return users_service.to_schema(updated_user, schema_type=UserPublic)
